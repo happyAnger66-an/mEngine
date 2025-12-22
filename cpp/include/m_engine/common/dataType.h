@@ -16,78 +16,118 @@
 
 #pragma once
 
-#include "tensorrt_llm/common/config.h"
-#include "tensorrt_llm/common/tllmException.h"
-
 #include <NvInferRuntime.h>
+
 #include <map>
 
-TRTLLM_NAMESPACE_BEGIN
+#include "m_engine/common/mEngineException.h"
 
-namespace common
-{
+namespace m_engine {
+namespace common {
 
-constexpr static size_t getDTypeSize(nvinfer1::DataType type)
-{
-    switch (type)
-    {
-    case nvinfer1::DataType::kINT64: return 8;
-    case nvinfer1::DataType::kINT32: [[fallthrough]];
-    case nvinfer1::DataType::kFLOAT: return 4;
-    case nvinfer1::DataType::kBF16: [[fallthrough]];
-    case nvinfer1::DataType::kHALF: return 2;
-    case nvinfer1::DataType::kBOOL: [[fallthrough]];
-    case nvinfer1::DataType::kUINT8: [[fallthrough]];
-    case nvinfer1::DataType::kINT8: [[fallthrough]];
-    case nvinfer1::DataType::kFP8: return 1;
-    case nvinfer1::DataType::kINT4: TLLM_THROW("Cannot determine size of INT4 data type");
-    case nvinfer1::DataType::kFP4: TLLM_THROW("Cannot determine size of FP4 data type");
-    default: TLLM_THROW("Unknown dtype %d", static_cast<int>(type));
-    }
-    return 0;
+constexpr static size_t getDTypeSize(nvinfer1::DataType type) {
+  switch (type) {
+    case nvinfer1::DataType::kINT64:
+      return 8;
+    case nvinfer1::DataType::kINT32:
+      [[fallthrough]];
+    case nvinfer1::DataType::kFLOAT:
+      return 4;
+    case nvinfer1::DataType::kBF16:
+      [[fallthrough]];
+    case nvinfer1::DataType::kHALF:
+      return 2;
+    case nvinfer1::DataType::kBOOL:
+      [[fallthrough]];
+    case nvinfer1::DataType::kUINT8:
+      [[fallthrough]];
+    case nvinfer1::DataType::kINT8:
+      [[fallthrough]];
+    case nvinfer1::DataType::kFP8:
+      return 1;
+    case nvinfer1::DataType::kINT4:
+      MENGINE_THROW("Cannot determine size of INT4 data type");
+    case nvinfer1::DataType::kFP4:
+      MENGINE_THROW("Cannot determine size of FP4 data type");
+    default:
+      MENGINE_THROW("Unknown dtype %d", static_cast<int>(type));
+  }
+  return 0;
 }
 
-constexpr static size_t getDTypeSizeInBits(nvinfer1::DataType type)
-{
-    switch (type)
-    {
-    case nvinfer1::DataType::kINT64: return 64;
-    case nvinfer1::DataType::kINT32: [[fallthrough]];
-    case nvinfer1::DataType::kFLOAT: return 32;
-    case nvinfer1::DataType::kBF16: [[fallthrough]];
-    case nvinfer1::DataType::kHALF: return 16;
-    case nvinfer1::DataType::kBOOL: [[fallthrough]];
-    case nvinfer1::DataType::kUINT8: [[fallthrough]];
-    case nvinfer1::DataType::kINT8: [[fallthrough]];
-    case nvinfer1::DataType::kFP8: return 8;
-    case nvinfer1::DataType::kINT4: [[fallthrough]];
-    case nvinfer1::DataType::kFP4: return 4;
-    default: TLLM_THROW("Unknown dtype %d", static_cast<int>(type));
-    }
-    return 0;
+constexpr static size_t getDTypeSizeInBits(nvinfer1::DataType type) {
+  switch (type) {
+    case nvinfer1::DataType::kINT64:
+      return 64;
+    case nvinfer1::DataType::kINT32:
+      [[fallthrough]];
+    case nvinfer1::DataType::kFLOAT:
+      return 32;
+    case nvinfer1::DataType::kBF16:
+      [[fallthrough]];
+    case nvinfer1::DataType::kHALF:
+      return 16;
+    case nvinfer1::DataType::kBOOL:
+      [[fallthrough]];
+    case nvinfer1::DataType::kUINT8:
+      [[fallthrough]];
+    case nvinfer1::DataType::kINT8:
+      [[fallthrough]];
+    case nvinfer1::DataType::kFP8:
+      return 8;
+    case nvinfer1::DataType::kINT4:
+      [[fallthrough]];
+    case nvinfer1::DataType::kFP4:
+      return 4;
+    default:
+      MENGINE_THROW("Unknown dtype %d", static_cast<int>(type));
+  }
+  return 0;
 }
 
-[[maybe_unused]] static std::string getDtypeString(nvinfer1::DataType type)
-{
-    switch (type)
-    {
-    case nvinfer1::DataType::kFLOAT: return "fp32"; break;
-    case nvinfer1::DataType::kHALF: return "fp16"; break;
-    case nvinfer1::DataType::kINT8: return "int8"; break;
-    case nvinfer1::DataType::kINT32: return "int32"; break;
-    case nvinfer1::DataType::kBOOL: return "bool"; break;
-    case nvinfer1::DataType::kUINT8: return "uint8"; break;
-    case nvinfer1::DataType::kFP8: return "fp8"; break;
-    case nvinfer1::DataType::kBF16: return "bf16"; break;
-    case nvinfer1::DataType::kINT64: return "int64"; break;
-    case nvinfer1::DataType::kINT4: return "int4"; break;
-    case nvinfer1::DataType::kFP4: return "fp4"; break;
-    default: throw std::runtime_error("Unsupported data type"); break;
-    }
+[[maybe_unused]] static std::string getDtypeString(nvinfer1::DataType type) {
+  switch (type) {
+    case nvinfer1::DataType::kFLOAT:
+      return "fp32";
+      break;
+    case nvinfer1::DataType::kHALF:
+      return "fp16";
+      break;
+    case nvinfer1::DataType::kINT8:
+      return "int8";
+      break;
+    case nvinfer1::DataType::kINT32:
+      return "int32";
+      break;
+    case nvinfer1::DataType::kBOOL:
+      return "bool";
+      break;
+    case nvinfer1::DataType::kUINT8:
+      return "uint8";
+      break;
+    case nvinfer1::DataType::kFP8:
+      return "fp8";
+      break;
+    case nvinfer1::DataType::kBF16:
+      return "bf16";
+      break;
+    case nvinfer1::DataType::kINT64:
+      return "int64";
+      break;
+    case nvinfer1::DataType::kINT4:
+      return "int4";
+      break;
+    case nvinfer1::DataType::kFP4:
+      return "fp4";
+      break;
+    default:
+      throw std::runtime_error("Unsupported data type");
+      break;
+  }
 
-    return "";
+  return "";
 }
 
-} // namespace common
+}  // namespace common
 
-TRTLLM_NAMESPACE_END
+}  // namespace m_engine

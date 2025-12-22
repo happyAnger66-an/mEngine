@@ -18,6 +18,7 @@ set(SHARED_TARGET
     ${SHARED_TARGET}
     PARENT_SCOPE)
 set(API_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
+include_directories(${API_INCLUDE_DIR})
 
 set(TARGET_ARCH "unknown")
 
@@ -62,25 +63,11 @@ else() # Windows
   endif()
 endif()
 
-if(ENABLE_NVSHMEM)
-  # Add hints for aarch64
-  find_package(NVSHMEM REQUIRED HINTS /usr/lib/sbsa-linux-gnu/cmake/nvshmem/)
-  include_directories(/usr/include/nvshmem/)
-endif()
-
-if(NOT WIN32)
-  set(DECODER_SHARED_TARGET_0 decoder_attention_0)
-  set(DECODER_SHARED_TARGET_1 decoder_attention_1)
-endif()
-
 add_subdirectory(common)
 add_subdirectory(runtime)
-
 add_subdirectory(executor)
 
 find_package(Threads REQUIRED)
-target_link_libraries(${BATCH_MANAGER_TARGET} INTERFACE Threads::Threads)
-target_link_libraries(${EXECUTOR_TARGET} INTERFACE Threads::Threads)
 
 set(TRTLLM_LINK_LIBS
     ${CUDA_DRV_LIB}
@@ -89,9 +76,7 @@ set(TRTLLM_LINK_LIBS
     ${CURAND_LIB}
     ${CMAKE_DL_LIBS}
     ${TRT_LIB}
-    common_src
-    kernels_src)
-endif()
+    common_src)
 
 if(NOT WIN32) # Unix-like compilers
   set(UNDEFINED_FLAG "-Wl,--no-undefined")
@@ -117,6 +102,4 @@ target_link_libraries(${SHARED_TARGET} PUBLIC ${TRTLLM_LINK_LIBS})
 target_link_libraries(
   ${SHARED_TARGET}
   PRIVATE $<LINK_LIBRARY:WHOLE_ARCHIVE,${BATCH_MANAGER_TARGET}>
-          $<LINK_LIBRARY:WHOLE_ARCHIVE,${EXECUTOR_TARGET}>
-          $<LINK_LIBRARY:WHOLE_ARCHIVE,fp8_blockscale_gemm_src>
-          $<LINK_LIBRARY:WHOLE_ARCHIVE,${INTERNAL_CUTLASS_KERNELS_TARGET}>)
+          $<LINK_LIBRARY:WHOLE_ARCHIVE,${EXECUTOR_TARGET}>)

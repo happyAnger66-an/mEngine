@@ -64,7 +64,7 @@ DataType Tensor::getDataType() const
     case nvinfer1::DataType::kINT64: return DataType::kINT64;
     case nvinfer1::DataType::kINT4: [[fallthrough]] /* do nothing */;
     case nvinfer1::DataType::kFP4: [[fallthrough]] /* do nothing */;
-    default: TLLM_THROW("Unsupported data type");
+    default: MENGINE_THROW("Unsupported data type");
     }
 }
 
@@ -85,7 +85,7 @@ MemoryType Tensor::getMemoryType() const
     case runtime::MemoryType::kPINNEDPOOL: return MemoryType::kCPU_PINNEDPOOL;
     }
 
-    TLLM_THROW("Unsupported memory type");
+    MENGINE_THROW("Unsupported memory type");
 }
 
 Shape Tensor::getShape() const
@@ -128,7 +128,7 @@ namespace
 {
 me::ITensor::Shape toDims(Shape const& shape)
 {
-    TLLM_CHECK(shape.size() <= me::ITensor::Shape::MAX_DIMS);
+    MENGINE_CHECK(shape.size() <= me::ITensor::Shape::MAX_DIMS);
     me::ITensor::Shape dims;
     dims.nbDims = static_cast<decltype(dims.nbDims)>(shape.size());
     std::copy(shape.begin(), shape.end(), dims.d);
@@ -148,10 +148,10 @@ nvinfer1::DataType toDataType(DataType dataType)
     case DataType::kFP8: return nvinfer1::DataType::kFP8;
     case DataType::kFP16: return nvinfer1::DataType::kHALF;
     case DataType::kFP32: return nvinfer1::DataType::kFLOAT;
-    case DataType::kUNKNOWN: TLLM_THROW("Unsupported data type");
+    case DataType::kUNKNOWN: MENGINE_THROW("Unsupported data type");
     }
 
-    TLLM_THROW("Unsupported data type");
+    MENGINE_THROW("Unsupported data type");
 }
 
 } // namespace
@@ -213,31 +213,31 @@ Tensor Tensor::copyTo(std::shared_ptr<Impl> tensor, CudaStreamPtr stream) const
 
 Tensor Tensor::copyToCpu(Tensor::CudaStreamPtr stream) const
 {
-    TLLM_CHECK(*this);
+    MENGINE_CHECK(*this);
     return copyTo(me::BufferManager::cpu(mTensor->getShape(), mTensor->getDataType()), std::move(stream));
 }
 
 Tensor Tensor::copyToPinned(Tensor::CudaStreamPtr stream) const
 {
-    TLLM_CHECK(*this);
+    MENGINE_CHECK(*this);
     return copyTo(me::BufferManager::pinned(mTensor->getShape(), mTensor->getDataType()), std::move(stream));
 }
 
 Tensor Tensor::copyToPooledPinned(Tensor::CudaStreamPtr stream) const
 {
-    TLLM_CHECK(*this);
+    MENGINE_CHECK(*this);
     return copyTo(me::BufferManager::pinnedPool(mTensor->getShape(), mTensor->getDataType()), std::move(stream));
 }
 
 Tensor Tensor::copyToManaged(Tensor::CudaStreamPtr stream) const
 {
-    TLLM_CHECK(*this);
+    MENGINE_CHECK(*this);
     return copyTo(me::BufferManager::managed(mTensor->getShape(), mTensor->getDataType()), std::move(stream));
 }
 
 Tensor Tensor::copyToGpu(Tensor::CudaStreamPtr stream) const
 {
-    TLLM_CHECK(*this);
+    MENGINE_CHECK(*this);
     me::BufferManager manager{std::move(stream)};
     return Tensor{manager.copyFrom(*mTensor, runtime::MemoryType::kGPU)};
 }
@@ -262,8 +262,8 @@ void Tensor::setZero(CudaStreamPtr stream)
 
 void Tensor::setFrom(Tensor const& other, Tensor::CudaStreamPtr stream)
 {
-    TLLM_CHECK(*this);
-    TLLM_CHECK(other);
+    MENGINE_CHECK(*this);
+    MENGINE_CHECK(other);
     mTensor->reshape(other.mTensor->getShape());
     if (mTensor->getMemoryType() == runtime::MemoryType::kGPU
         || other.mTensor->getMemoryType() == runtime::MemoryType::kGPU)

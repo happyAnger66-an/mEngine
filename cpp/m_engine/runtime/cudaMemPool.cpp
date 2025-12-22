@@ -14,35 +14,35 @@
  * limitations under the License.
  */
 
-#include "tensorrt_llm/runtime/cudaMemPool.h"
-#include "tensorrt_llm/common/assert.h"
-#include "tensorrt_llm/common/cudaUtils.h"
-#include "tensorrt_llm/common/logger.h"
+#include "m_engine/runtime/cudaMemPool.h"
+#include "m_engine/common/assert.h"
+#include "m_engine/common/cudaUtils.h"
+#include "m_engine/common/logger.h"
 #include <array>
 #include <cuda_runtime_api.h>
 #include <memory>
 #include <mutex>
 
-namespace tensorrt_llm::runtime
+namespace m_engine::runtime
 {
 
 CudaMemPool::CudaMemPool(cudaMemPool_t pool)
 {
-    TLLM_CHECK_WITH_INFO(pool != nullptr, "Pointer to cudaMemPool cannot be nullptr.");
+    MENGINE_CHECK_WITH_INFO(pool != nullptr, "Pointer to cudaMemPool cannot be nullptr.");
     mPool = PoolPtr{pool, Deleter{}};
 }
 
 std::size_t CudaMemPool::memoryPoolReserved() const
 {
     std::size_t reserved = 0;
-    TLLM_CUDA_CHECK(cudaMemPoolGetAttribute(mPool.get(), cudaMemPoolAttrReservedMemCurrent, &reserved));
+    MENGINE_CUDA_CHECK(cudaMemPoolGetAttribute(mPool.get(), cudaMemPoolAttrReservedMemCurrent, &reserved));
     return reserved;
 }
 
 std::size_t CudaMemPool::memoryPoolUsed() const
 {
     std::size_t used = 0;
-    TLLM_CUDA_CHECK(cudaMemPoolGetAttribute(mPool.get(), cudaMemPoolAttrUsedMemCurrent, &used));
+    MENGINE_CUDA_CHECK(cudaMemPoolGetAttribute(mPool.get(), cudaMemPoolAttrUsedMemCurrent, &used));
     return used;
 }
 
@@ -53,7 +53,7 @@ std::size_t CudaMemPool::memoryPoolFree() const
 
 void CudaMemPool::memoryPoolTrimTo(std::size_t size)
 {
-    TLLM_CUDA_CHECK(::cudaMemPoolTrimTo(mPool.get(), size));
+    MENGINE_CUDA_CHECK(::cudaMemPoolTrimTo(mPool.get(), size));
 }
 
 cudaMemPool_t CudaMemPool::getPool() const
@@ -64,14 +64,14 @@ cudaMemPool_t CudaMemPool::getPool() const
 bool CudaMemPool::supportsMemoryPool(int deviceId)
 {
     int32_t value{};
-    TLLM_CUDA_CHECK(cudaDeviceGetAttribute(&value, cudaDevAttrMemoryPoolsSupported, deviceId));
+    MENGINE_CUDA_CHECK(cudaDeviceGetAttribute(&value, cudaDevAttrMemoryPoolsSupported, deviceId));
     return value != 0;
 }
 
 void CudaMemPool::Deleter::operator()(cudaMemPool_t pool) const
 {
-    TLLM_CUDA_CHECK_FREE_RESOURCE(::cudaMemPoolDestroy(pool));
-    TLLM_LOG_TRACE("Destroyed pool %p", pool);
+    MENGINE_CUDA_CHECK_FREE_RESOURCE(::cudaMemPoolDestroy(pool));
+    MENGINE_LOG_TRACE("Destroyed pool %p", pool);
 }
 
 namespace
@@ -79,7 +79,7 @@ namespace
 
 std::shared_ptr<CudaMemPool> createPrimaryDevicePool(int deviceId)
 {
-    TLLM_LOG_TRACE("%s start", __PRETTY_FUNCTION__);
+    MENGINE_LOG_TRACE("%s start", __PRETTY_FUNCTION__);
 
     ::cudaMemPool_t memPool = nullptr;
     ::cudaMemPoolProps poolProps{};
@@ -87,11 +87,11 @@ std::shared_ptr<CudaMemPool> createPrimaryDevicePool(int deviceId)
     poolProps.handleTypes = ::cudaMemHandleTypeNone;
     poolProps.location.type = ::cudaMemLocationTypeDevice;
     poolProps.location.id = deviceId;
-    TLLM_CUDA_CHECK(::cudaMemPoolCreate(&memPool, &poolProps));
+    MENGINE_CUDA_CHECK(::cudaMemPoolCreate(&memPool, &poolProps));
     // set memory pool threshold to avoid shrinking the pool
     auto maxThreshold = std::numeric_limits<std::uint64_t>::max();
-    TLLM_CUDA_CHECK(cudaMemPoolSetAttribute(memPool, cudaMemPoolAttrReleaseThreshold, &maxThreshold));
-    TLLM_LOG_TRACE("%s stop", __PRETTY_FUNCTION__);
+    MENGINE_CUDA_CHECK(cudaMemPoolSetAttribute(memPool, cudaMemPoolAttrReleaseThreshold, &maxThreshold));
+    MENGINE_LOG_TRACE("%s stop", __PRETTY_FUNCTION__);
     return std::make_shared<CudaMemPool>(memPool);
 }
 
@@ -115,12 +115,12 @@ std::array<bool, maxDevicePerNode> primaryDevicePoolInitAttempted{};
 
 std::shared_ptr<CudaMemPool> CudaMemPool::getPrimaryPoolForDevice(int deviceId)
 {
-    TLLM_LOG_TRACE("%s start", __PRETTY_FUNCTION__);
+    MENGINE_LOG_TRACE("%s start", __PRETTY_FUNCTION__);
     // If we've already attempted, successfully or not, to initialize the pool for that device, we just return whatever
     // we have at the device index.
     if (primaryDevicePoolInitAttempted.at(deviceId))
     {
-        TLLM_LOG_TRACE("%s stop", __PRETTY_FUNCTION__);
+        MENGINE_LOG_TRACE("%s stop", __PRETTY_FUNCTION__);
         return primaryDevicePools.at(deviceId);
     }
 
@@ -131,7 +131,7 @@ std::shared_ptr<CudaMemPool> CudaMemPool::getPrimaryPoolForDevice(int deviceId)
         // Check again that pool has not been initialized while this thread was waiting on the lock.
         if (primaryDevicePoolInitAttempted.at(deviceId))
         {
-            TLLM_LOG_TRACE("%s stop", __PRETTY_FUNCTION__);
+            MENGINE_LOG_TRACE("%s stop", __PRETTY_FUNCTION__);
             return primaryDevicePools.at(deviceId);
         }
 
@@ -139,7 +139,7 @@ std::shared_ptr<CudaMemPool> CudaMemPool::getPrimaryPoolForDevice(int deviceId)
         if (!CudaMemPool::supportsMemoryPool(deviceId))
         {
             primaryDevicePoolInitAttempted.at(deviceId) = true;
-            TLLM_LOG_TRACE("%s stop", __PRETTY_FUNCTION__);
+            MENGINE_LOG_TRACE("%s stop", __PRETTY_FUNCTION__);
             return {};
         }
 
@@ -148,15 +148,15 @@ std::shared_ptr<CudaMemPool> CudaMemPool::getPrimaryPoolForDevice(int deviceId)
         {
             primaryDevicePools.at(deviceId) = createPrimaryDevicePool(deviceId);
             primaryDevicePoolInitAttempted.at(deviceId) = true;
-            TLLM_LOG_TRACE("%s stop", __PRETTY_FUNCTION__);
+            MENGINE_LOG_TRACE("%s stop", __PRETTY_FUNCTION__);
             return primaryDevicePools.at(deviceId);
         }
         catch (std::exception const& exception)
         {
-            TLLM_LOG_ERROR("Failed to initialized memory pool for device %i.", deviceId);
-            TLLM_LOG_EXCEPTION(exception);
+            MENGINE_LOG_ERROR("Failed to initialized memory pool for device %i.", deviceId);
+            MENGINE_LOG_EXCEPTION(exception);
             primaryDevicePoolInitAttempted.at(deviceId) = true;
-            TLLM_LOG_TRACE("%s stop", __PRETTY_FUNCTION__);
+            MENGINE_LOG_TRACE("%s stop", __PRETTY_FUNCTION__);
             return {};
         }
     }
