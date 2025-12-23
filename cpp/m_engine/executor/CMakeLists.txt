@@ -20,7 +20,8 @@ set(TARGET_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 # keep this list sorted alphabetically
 set(SRCS
     tensor.cpp
-    types.cpp)
+    types.cpp
+    serialization.cpp)
 
 if(NOT WIN32)
   # additional warnings

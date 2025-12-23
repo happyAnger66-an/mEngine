@@ -13,5 +13,19 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-add_gtest(bufferManagerTest bufferManagerTest.cpp)
-add_gtest(mEngineBuffersTest mEngineBuffersTest.cpp)
+
+add_gtest(executorTensorTest tensorTest.cpp)
+
+# Skip MOONCAKE related tests on Rocky8
+set(IS_ROCKY8 FALSE)
+if(EXISTS "/etc/redhat-release")
+  set(IS_ROCKY8 TRUE)
+endif()
+
+if(NIXL_ROOT OR (MOONCAKE_ROOT AND NOT IS_ROCKY8))
+  if(NIXL_ROOT)
+  endif()
+
+  if(MOONCAKE_ROOT)
+  endif()
+endif()

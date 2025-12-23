@@ -16,6 +16,10 @@
 # GoogleTest Preparation - Code block copied from
 # https://google.github.io/googletest/quickstart-cmake.html
 include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
+)
 FetchContent_MakeAvailable(googletest)
 include(GoogleTest)
 
@@ -38,13 +42,8 @@ function(add_gtest test_name test_src)
   endif()
   if(NOT ARGS_NO_TLLM_LINKAGE)
     target_link_libraries(${test_name} PUBLIC ${SHARED_TARGET}
-                                              nvinfer_plugin_tensorrt_llm)
-    if(WIN32)
-      target_link_libraries(${test_name} PRIVATE context_attention_src)
-    endif()
-  endif()
-  if(ENABLE_MULTI_DEVICE)
-    target_compile_definitions(${test_name} PUBLIC ENABLE_MULTI_DEVICE)
+                                              runtime_src
+                                              m_engine_executor_static)
   endif()
 
   target_compile_features(${test_name} PRIVATE cxx_std_17)

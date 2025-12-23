@@ -69,7 +69,7 @@ add_subdirectory(executor)
 
 find_package(Threads REQUIRED)
 
-set(TRTLLM_LINK_LIBS
+set(MENGINE_LINK_LIBS
     ${CUDA_DRV_LIB}
     ${CUBLAS_LIB}
     ${CUBLASLT_LIB}
@@ -78,6 +78,7 @@ set(TRTLLM_LINK_LIBS
     ${TRT_LIB}
     common_src)
 
+ message("!!!!!! mengine_link_libs ${MENGINE_LINK_LIBS}")
 if(NOT WIN32) # Unix-like compilers
   set(UNDEFINED_FLAG "-Wl,--no-undefined")
   set(AS_NEEDED_FLAG "-Wl,--as-needed")
@@ -97,7 +98,7 @@ set_target_properties(
   PROPERTIES CXX_STANDARD "17" CXX_STANDARD_REQUIRED "YES" CXX_EXTENSIONS "NO"
              LINK_FLAGS "${AS_NEEDED_FLAG} ${UNDEFINED_FLAG}")
 
-target_link_libraries(${SHARED_TARGET} PUBLIC ${TRTLLM_LINK_LIBS})
+target_link_libraries(${SHARED_TARGET} PUBLIC ${MENGINE_LINK_LIBS})
 
 target_link_libraries(
   ${SHARED_TARGET}

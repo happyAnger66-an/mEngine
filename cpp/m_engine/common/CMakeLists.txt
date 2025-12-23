@@ -15,7 +15,7 @@
 # the License.
 #
 file(GLOB SRCS *.cpp)
-#file(GLOB CU_SRCS *.cu)
+file(GLOB CU_SRCS *.cu)
 
 if(NOT WIN32)
   # additional warnings
@@ -36,6 +36,7 @@ add_library(common_src OBJECT ${SRCS} ${CU_SRCS})
 add_cuda_architectures(common_src 89)
 set_property(TARGET common_src PROPERTY POSITION_INDEPENDENT_CODE ON)
 set_property(TARGET common_src PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+target_link_libraries(common_src CUDA::cudart)
 
 if(ENABLE_CUBLASLT_FP4_GEMM)
   target_compile_definitions(common_src PRIVATE ENABLE_CUBLASLT_FP4_GEMM)

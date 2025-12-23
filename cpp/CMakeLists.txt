@@ -19,6 +19,8 @@ cmake_minimum_required(VERSION 3.27 FATAL_ERROR)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+#find_package(CUDAToolkit REQUIRED)
+
 include(resolve_dirs)
 include(parse_make_options)
 include(cuda_configuration)
@@ -99,7 +101,7 @@ enable_language(C CXX CUDA)
 
 set(CUDA_DRV_LIB CUDA::cuda_driver)
 set(CUDA_NVML_LIB CUDA::nvml)
-set(CUDA_RT_LIB CUDA::cudart_static)
+#set(CUDA_RT_LIB CUDA::cudart_static)
 set(NVPTX_LIB CUDA::nvptxcompiler_static)
 
 set(CUDA_TOOLKIT_COMPONENTS cudart_static cuda_driver nvml nvptxcompiler_static)
@@ -282,7 +284,7 @@ add_subdirectory(m_engine)
 
 if(BUILD_TESTS)
   enable_testing()
-#  add_subdirectory(tests)
+  add_subdirectory(tests)
 endif()
 
 # Measure the compile time
