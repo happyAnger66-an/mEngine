@@ -36,14 +36,14 @@
 #include "m_engine/runtime/memoryCounters.h"
 
 using namespace m_engine::runtime;
-namespace tc = m_engine::common;
+namespace mc = m_engine::common;
 
 class mEngineBuffersTest
     : public ::testing::Test  // NOLINT(cppcoreguidelines-pro-type-member-init)
 {
  protected:
   void SetUp() override {
-    mDeviceCount = tc::getDeviceCount();
+    mDeviceCount = mc::getDeviceCount();
     PinnedPoolAllocator::getPool().setChunkSize(kPinnedPoolChunkSize);
     mStream = std::make_shared<CudaStream>();
     mMemPool = CudaMemPool::getPrimaryPoolForDevice(mStream->getDevice());
@@ -315,7 +315,7 @@ TEST_F(mEngineBuffersTest, BufferOutput) {
     EXPECT_THAT(str, ::testing::HasSubstr(std::string("shape: (") +
                                           std::to_string(size) + ")"));
     EXPECT_THAT(str,
-                ::testing::HasSubstr(tc::vec2str(std::vector<int>(size, 0))));
+                ::testing::HasSubstr(mc::vec2str(std::vector<int>(size, 0))));
   }
   streamPtr->synchronize();
 }
