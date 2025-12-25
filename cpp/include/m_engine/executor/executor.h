@@ -33,6 +33,11 @@ class TRTExecutor : BaseExecutor {
     copyDevice2Host();
     mBufferMgr->getStream().synchronize();
   }
+  
+  IBuffer::SharedPtr GetOutputBuffer(const std::string& name) {
+    auto index = mName2Index.at(name);
+    return mHostBuffers[index];
+  }
 
   IBuffer::SharedPtr GetHostBuffer(const std::string& name) {
     auto index = mName2Index.at(name);

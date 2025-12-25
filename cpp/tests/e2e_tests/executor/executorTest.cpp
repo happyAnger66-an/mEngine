@@ -43,6 +43,7 @@
 #include "m_engine/runtime/cudaStream.h"
 #include "m_engine/runtime/iBuffer.h"
 #include "m_engine/runtime/iTensor.h"
+#include "m_engine/runtime/memoryCounters.h"
 
 namespace mr = m_engine::runtime;
 namespace mc = m_engine::common;
@@ -131,9 +132,6 @@ TEST_F(YoloExecutorTest, validInferOutputBuffer) {
   auto mBufferManager =
       std::make_unique<mr::BufferManager>(std::make_unique<mr::CudaStream>());
 
-  //  nvinfer1::Dims inputDims(1,3,224,224);
-  // nvinfer1::DataType dataType = nvinfer1::DataType::KFLOAT;
-
   auto executor = TRTExecutor(trtEnginePath);
   auto output_host_buffer = executor.GetHostBuffer(output_tensor_name);
   auto output_device_buffer = executor.GetDeviceBuffer(output_tensor_name);
@@ -149,6 +147,29 @@ TEST_F(YoloExecutorTest, validInferOutputBuffer) {
       reinterpret_cast<const char*>(device2host_buff->data());
   for (int i = 0; i < numBytes; i++) {
     EXPECT_EQ(host_data[i], device_data[i]);
-//    EXPECT_EQ(host_data[i], 0);
   }
+}
+
+TEST_F(YoloExecutorTest, validMemUsed) {
+  auto trtEnginePath = "/tmp/quantize/1215/model.engine";
+  auto output_tensor_name = "gpu_0/softmax_1";
+  auto mBufferManager =
+      std::make_unique<mr::BufferManager>(std::make_unique<mr::CudaStream>());
+
+  auto executor = TRTExecutor(trtEnginePath);
+
+  auto & mem_counters = mr::MemoryCounters::getInstance();
+  EXPECT_EQ(mem_counters.getGpu(), 606112);
+  EXPECT_EQ(mem_counters.getCpu(), 606112);
+ 
+  /* read model output device to host. */
+  auto output_device_buffer = executor.GetDeviceBuffer(output_tensor_name);
+  auto device2host_buff =
+      mBufferManager->copyFrom(*output_device_buffer, mr::MemoryType::kCPU);
+  EXPECT_EQ(mem_counters.getGpu(), 606112);
+  EXPECT_EQ(mem_counters.getCpu(), 606112+1000*sizeof(float));
+
+  device2host_buff.reset(nullptr);
+  EXPECT_EQ(mem_counters.getGpu(), 606112);
+  EXPECT_EQ(mem_counters.getCpu(), 606112);
 }
