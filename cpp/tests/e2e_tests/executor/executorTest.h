@@ -1,6 +1,6 @@
 /*
- * SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
- * SPDX-License-Identifier: Apache-2.0
+ * SPDX-FileCopyrightText: Copyright (c) 2023-2025 NVIDIA CORPORATION &
+ * AFFILIATES. All rights reserved. SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,39 +16,30 @@
  */
 
 #pragma once
-
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <memory>
 
-namespace m_engine::testing
+#include "m_engine/common/cudaUtils.h"
+
+namespace m_engine::testing {
+
+class YoloExecutorTest
+    : public ::testing::Test  // NOLINT(cppcoreguidelines-pro-type-member-init)
 {
-
-class GptExecutorTest : public ::testing::Test // NOLINT(cppcoreguidelines-pro-type-member-init)
-{
-public:
-    using SizeType32 = tensorrt_llm::testing::SizeType32;
-
-protected:
-    void SetUp() override
-    {
-        mDeviceCount = tensorrt_llm::common::getDeviceCount();
-        if (mDeviceCount == 0)
-        {
-            GTEST_SKIP() << "No GPUs found";
-        }
-
-        mLogger = std::make_shared<tensorrt_llm::runtime::TllmLogger>();
-        initTrtLlmPlugins(mLogger.get());
+ public:
+ protected:
+  void SetUp() override {
+    mDeviceCount = m_engine::common::getDeviceCount();
+    if (mDeviceCount == 0) {
+      GTEST_SKIP() << "No GPUs found";
     }
+  }
 
-    void TearDown() override {}
+  void TearDown() override {}
 
-    int mDeviceCount{};
-    std::shared_ptr<nvinfer1::ILogger> mLogger{};
-    SizeType32 mMaxWaitMs = 300000;
-    SizeType32 mTrigWarnMs = 10000;
+  int mDeviceCount{};
 };
 
-} // namespace tensorrt_llm::testing
+}  // namespace m_engine::testing

@@ -21,7 +21,10 @@ set(TARGET_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(SRCS
     tensor.cpp
     types.cpp
-    serialization.cpp)
+    serialization.cpp
+    trt_logger.cpp
+    executor.cpp
+    )
 
 if(NOT WIN32)
   # additional warnings
@@ -49,3 +52,4 @@ set_property(TARGET ${EXECUTOR_STATIC_TARGET}
 set(TOP_LEVEL_DIR "${PROJECT_SOURCE_DIR}/..")
 target_compile_definitions(${EXECUTOR_STATIC_TARGET}
                            PUBLIC TOP_LEVEL_DIR="${TOP_LEVEL_DIR}")
+target_link_libraries(${EXECUTOR_STATIC_TARGET} glog::glog)

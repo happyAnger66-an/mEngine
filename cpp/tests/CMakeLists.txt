@@ -60,4 +60,4 @@ function(add_gtest test_name test_src)
 endfunction()
 
 add_subdirectory(unit_tests)
-#add_subdirectory(e2e_tests)
+add_subdirectory(e2e_tests)
