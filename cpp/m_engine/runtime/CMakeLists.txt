@@ -21,7 +21,9 @@ set(SRCS
     iTensor.cpp
     memoryCounters.cpp
     mEngineBuffers.cpp
-    virtualMemory.cpp)
+    virtualMemory.cpp
+    utils/numpyUtils.cpp
+    )
 
 include_directories(${API_INCLUDE_DIR}/m_engine/runtime)
 

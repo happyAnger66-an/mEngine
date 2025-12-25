@@ -35,6 +35,44 @@ int TRTExecutor::LoadEngine(const std::string& engine_file) {
   return 0;
 }
 
+void TRTExecutor::copyHost2Device() {
+  for (auto const& n : mName2Index) {
+    if (tenosrIsInput(n.first)) {
+      auto index = n.second;
+      mBufferMgr->copy(*mHostBuffers[index], mDeviceBuffers[index]->data());
+    }
+  }
+}
+
+void TRTExecutor::copyDevice2Host() {
+  for (auto const& n : mName2Index) {
+    if (!tenosrIsInput(n.first)) {
+      auto index = n.second;
+      mBufferMgr->copy(*mDeviceBuffers[index], mHostBuffers[index]->data());
+    }
+  }
+}
+
+void TRTExecutor::setIoTensors() {
+  for (int32_t i = 0; i < mIoNums; i++) {
+    auto const name = mEngine->getIOTensorName(i);
+    mExecContext->setTensorAddress(name, mDeviceBindings[i]);
+  }
+}
+
+void TRTExecutor::PrepareData() {
+  copyHost2Device();
+}
+
+void TRTExecutor::Infer() {
+  setIoTensors();
+
+  mExecContext->enqueueV3(mStream->get());
+
+  copyDevice2Host();
+  mBufferMgr->getStream().synchronize();
+}
+
 void TRTExecutor::init() {
   mIoNums = mEngine->getNbIOTensors();
 

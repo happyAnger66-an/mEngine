@@ -181,6 +181,8 @@ __inline__ __host__ __device__ T constexpr flat_index_strided4(
   return index_0 * stride_1 + index_1 * stride_2 + index_2 * stride_3 + index_3;
 }
 
+template <typename T_IN, typename T_OUT>
+void invokeCudaD2DcpyConvert(T_OUT* tgt, const T_IN* src, size_t const size, cudaStream_t stream = 0);
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }  // namespace common

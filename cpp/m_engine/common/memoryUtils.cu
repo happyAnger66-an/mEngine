@@ -15,7 +15,7 @@
  */
 
 #include "m_engine/common/assert.h"
-//#include "tensorrt_llm/common/cudaTypeUtils.cuh"
+#include "m_engine/common/cudaTypeUtils.cuh"
 #include "m_engine/common/logger.h"
 #include "m_engine/common/memoryUtils.h"
 
@@ -85,6 +85,40 @@ cudaError_t cudaMemcpyAsyncSanitized(
     return cudaMemcpyAsync(dst, src, count, kind, stream);
 #endif
 }
+
+template <typename T_IN, typename T_OUT>
+__global__ void cudaD2DcpyConvert(T_OUT* dst, const T_IN* src, const size_t size)
+{
+    for (size_t tid = threadIdx.x + blockIdx.x * blockDim.x; tid < size; tid += blockDim.x * gridDim.x)
+    {
+        dst[tid] = cuda_cast<T_OUT>(src[tid]);
+    }
+}
+
+template <typename T_IN, typename T_OUT>
+void invokeCudaD2DcpyConvert(T_OUT* tgt, const T_IN* src, const size_t size, cudaStream_t stream)
+{
+    cudaD2DcpyConvert<<<256, 256, 0, stream>>>(tgt, src, size);
+}
+
+template void invokeCudaD2DcpyConvert(int8_t* tgt, float const* src, const size_t size, cudaStream_t stream);
+template void invokeCudaD2DcpyConvert(float* tgt, int8_t const* src, const size_t size, cudaStream_t stream);
+template void invokeCudaD2DcpyConvert(float* tgt, int const* src, const size_t size, cudaStream_t stream);
+template void invokeCudaD2DcpyConvert(half* tgt, int const* src, const size_t size, cudaStream_t stream);
+template void invokeCudaD2DcpyConvert(float* tgt, float const* src, const size_t size, cudaStream_t stream);
+template void invokeCudaD2DcpyConvert(half* tgt, float const* src, const size_t size, cudaStream_t stream);
+template void invokeCudaD2DcpyConvert(float* tgt, half const* src, const size_t size, cudaStream_t stream);
+template void invokeCudaD2DcpyConvert(uint32_t* tgt, int const* src, const size_t size, cudaStream_t stream);
+template void invokeCudaD2DcpyConvert(int* tgt, uint32_t const* src, const size_t size, cudaStream_t stream);
+template void invokeCudaD2DcpyConvert(int* tgt, float const* src, const size_t size, cudaStream_t stream);
+template void invokeCudaD2DcpyConvert(int* tgt, half const* src, const size_t size, cudaStream_t stream);
+
+#ifdef ENABLE_BF16
+template void invokeCudaD2DcpyConvert(__nv_bfloat16* tgt, float const* src, const size_t size, cudaStream_t stream);
+template void invokeCudaD2DcpyConvert(__nv_bfloat16* tgt, int const* src, const size_t size, cudaStream_t stream);
+template void invokeCudaD2DcpyConvert(float* tgt, __nv_bfloat16 const* src, const size_t size, cudaStream_t stream);
+template void invokeCudaD2DcpyConvert(int* tgt, __nv_bfloat16 const* src, const size_t size, cudaStream_t stream);
+#endif // ENABLE_BF16
 
 }
 

@@ -136,6 +136,7 @@ TEST_F(YoloExecutorTest, validInferOutputBuffer) {
   auto output_host_buffer = executor.GetHostBuffer(output_tensor_name);
   auto output_device_buffer = executor.GetDeviceBuffer(output_tensor_name);
 
+  executor.PrepareData();
   executor.Infer();
 
   int32_t numBytes = output_host_buffer->getSizeInBytes();

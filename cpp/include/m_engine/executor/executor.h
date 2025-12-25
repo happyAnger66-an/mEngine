@@ -1,6 +1,6 @@
 #pragma once
-#include <cassert>
 #include <algorithm>
+#include <cassert>
 #include <fstream>
 #include <memory>
 #include <string>
@@ -24,16 +24,10 @@ class TRTExecutor : BaseExecutor {
   explicit TRTExecutor(const std::string& engine_path,
                        const int32_t batchSize = 0);
 
-  void Infer() {
-    copyHost2Device();
-    setIoTensors();
+  void Infer();
 
-    mExecContext->enqueueV3(mStream->get());
+  void PrepareData();
 
-    copyDevice2Host();
-    mBufferMgr->getStream().synchronize();
-  }
-  
   IBuffer::SharedPtr GetOutputBuffer(const std::string& name) {
     auto index = mName2Index.at(name);
     return mHostBuffers[index];
@@ -88,30 +82,11 @@ class TRTExecutor : BaseExecutor {
     return (m + n - 1) / n;
   }
 
-  void copyHost2Device() {
-    for (auto const& n : mName2Index) {
-      if (tenosrIsInput(n.first)) {
-        auto index = n.second;
-        mBufferMgr->copy(*mHostBuffers[index], mDeviceBuffers[index]->data());
-      }
-    }
-  }
+  void copyHost2Device();
 
-  void copyDevice2Host() {
-    for (auto const& n : mName2Index) {
-      if (!tenosrIsInput(n.first)) {
-        auto index = n.second;
-        mBufferMgr->copy(*mDeviceBuffers[index], mHostBuffers[index]->data());
-      }
-    }
-  }
+  void copyDevice2Host();
 
-  void setIoTensors() {
-    for (int32_t i = 0; i < mIoNums; i++) {
-      auto const name = mEngine->getIOTensorName(i);
-      mExecContext->setTensorAddress(name, mDeviceBindings[i]);
-    }
-  }
+  void setIoTensors();
 
   void init();
 
