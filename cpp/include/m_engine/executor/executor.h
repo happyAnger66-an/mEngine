@@ -33,6 +33,14 @@ class TRTExecutor : BaseExecutor {
     return mHostBuffers[index];
   }
 
+  int SetHostBuffer(const std::string& name, IBuffer::SharedPtr buffer) {
+    return 0;
+  }
+
+  int SetDeviceBuffer(const std::string& name, IBuffer::SharedPtr buffer) {
+    return 0;
+  }
+
   IBuffer::SharedPtr GetHostBuffer(const std::string& name) {
     auto index = mName2Index.at(name);
     return mHostBuffers[index];
