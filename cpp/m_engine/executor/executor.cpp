@@ -60,9 +60,7 @@ void TRTExecutor::setIoTensors() {
   }
 }
 
-void TRTExecutor::PrepareData() {
-  copyHost2Device();
-}
+void TRTExecutor::PrepareData() { copyHost2Device(); }
 
 void TRTExecutor::Infer() {
   setIoTensors();
