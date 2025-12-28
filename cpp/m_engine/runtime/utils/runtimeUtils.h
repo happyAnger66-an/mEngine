@@ -16,16 +16,16 @@
 
 #pragma once
 
-#include "tensorrt_llm/runtime/modelConfig.h"
-#include "tensorrt_llm/runtime/worldConfig.h"
+#include "m_engine/runtime/modelConfig.h"
+#include "m_engine/runtime/worldConfig.h"
 
 #include <cstdint>
 #include <string>
 #include <vector>
 
-namespace tensorrt_llm::runtime
+namespace m_engine::runtime
 {
-class TllmRuntime;
+class MEngineRuntime;
 
 namespace utils
 {
