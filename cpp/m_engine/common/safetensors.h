@@ -15,52 +15,48 @@
  */
 
 #pragma once
-#include "tensorrt_llm/common/assert.h"
-#include "tensorrt_llm/common/config.h"
-#include "tensorrt_llm/common/logger.h"
 #include <NvInferRuntime.h>
+
 #include <cstdint>
 #include <map>
 #include <memory>
 #include <utility>
 
-TRTLLM_NAMESPACE_BEGIN
+#include "m_engine/common/assert.h"
+#include "m_engine/common/logger.h"
 
-namespace common::safetensors
-{
-class INdArray
-{
-public:
-    [[nodiscard]] virtual void const* data() const = 0;
-    [[nodiscard]] virtual int ndim() const = 0;
-    [[nodiscard]] virtual std::vector<int64_t> const& dims() const = 0;
-    [[nodiscard]] virtual nvinfer1::DataType dtype() const = 0;
+namespace {
 
-    [[nodiscard]] nvinfer1::Dims trtDims() const
-    {
-        nvinfer1::Dims dims;
-        dims.nbDims = ndim();
-        TLLM_CHECK(dims.nbDims <= nvinfer1::Dims::MAX_DIMS);
-        memset(dims.d, 0, sizeof(dims.d));
-        for (int i = 0; i < dims.nbDims; ++i)
-        {
-            dims.d[i] = this->dims()[i];
-        }
-        return dims;
+namespace common::safetensors {
+class INdArray {
+ public:
+  [[nodiscard]] virtual void const* data() const = 0;
+  [[nodiscard]] virtual int ndim() const = 0;
+  [[nodiscard]] virtual std::vector<int64_t> const& dims() const = 0;
+  [[nodiscard]] virtual nvinfer1::DataType dtype() const = 0;
+
+  [[nodiscard]] nvinfer1::Dims trtDims() const {
+    nvinfer1::Dims dims;
+    dims.nbDims = ndim();
+    MENGINE_CHECK(dims.nbDims <= nvinfer1::Dims::MAX_DIMS);
+    memset(dims.d, 0, sizeof(dims.d));
+    for (int i = 0; i < dims.nbDims; ++i) {
+      dims.d[i] = this->dims()[i];
     }
+    return dims;
+  }
 
-    virtual ~INdArray() = default;
+  virtual ~INdArray() = default;
 };
 
-class ISafeTensor
-{
-public:
-    static std::shared_ptr<ISafeTensor> open(char const* filename);
-    virtual std::shared_ptr<INdArray> getTensor(char const* name) = 0;
-    virtual std::vector<std::string> keys() = 0;
-    virtual ~ISafeTensor() = default;
+class ISafeTensor {
+ public:
+  static std::shared_ptr<ISafeTensor> open(char const* filename);
+  virtual std::shared_ptr<INdArray> getTensor(char const* name) = 0;
+  virtual std::vector<std::string> keys() = 0;
+  virtual ~ISafeTensor() = default;
 };
 
-} // namespace common::safetensors
+}  // namespace common::safetensors
 
-TRTLLM_NAMESPACE_END
+}  // namespace

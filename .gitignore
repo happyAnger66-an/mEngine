@@ -1,5 +1,6 @@
 build/
 cpp/build/
+cpp/build_new/
 # Prerequisites
 *.d
 

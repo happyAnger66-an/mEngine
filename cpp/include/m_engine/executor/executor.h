@@ -37,7 +37,9 @@ class TRTExecutor : BaseExecutor {
     return 0;
   }
 
-  int SetDeviceBuffer(const std::string& name, IBuffer::SharedPtr buffer) {
+  int SetDeviceBuffer(const std::string& name, void *data) {
+    auto index = mName2Index.at(name);
+    mDeviceBindings[index] = data;
     return 0;
   }
 

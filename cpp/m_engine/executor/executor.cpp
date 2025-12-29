@@ -56,6 +56,7 @@ void TRTExecutor::copyDevice2Host() {
 void TRTExecutor::setIoTensors() {
   for (int32_t i = 0; i < mIoNums; i++) {
     auto const name = mEngine->getIOTensorName(i);
+    std::cerr << "setIoTensors " << name << std::endl;
     mExecContext->setTensorAddress(name, mDeviceBindings[i]);
   }
 }
@@ -80,28 +81,36 @@ void TRTExecutor::init() {
     mName2Index[name] = i;
     mIndex2Name[i] = name;
 
+    const auto num_opt_profiles = mEngine->getNbOptimizationProfiles();
     auto dims = mExecContext ? mExecContext->getTensorShape(name)
                              : mEngine->getTensorShape(name);
-    size_t vol =
-        mExecContext || mBatchSize ? 1 : static_cast<size_t>(mBatchSize);
-    nvinfer1::DataType type = mEngine->getTensorDataType(name);
-    std::cerr << "tensor name: " << name
-              << " tensor type: " << static_cast<int>(type) << std::endl;
-    int32_t vecDim = mEngine->getTensorVectorizedDim(name);
-    if (-1 != vecDim)  // i.e., 0 != lgScalarsPerVector
-    {
-      int32_t scalarsPerVec = mEngine->getTensorComponentsPerElement(name);
-      dims.d[vecDim] = divUp(dims.d[vecDim], scalarsPerVec);
-      vol *= scalarsPerVec;
+    const auto is_dynamic_tensor =
+        std::any_of(dims.d, dims.d + dims.nbDims,
+                    [](const int32_t dim) { return dim == -1; });
+    if (!is_dynamic_tensor) {
+      size_t vol =
+          mExecContext || mBatchSize ? 1 : static_cast<size_t>(mBatchSize);
+      nvinfer1::DataType type = mEngine->getTensorDataType(name);
+      int32_t vecDim = mEngine->getTensorVectorizedDim(name);
+      std::cerr << "dims " << dims.d[0] << " " << dims.d[1] << " " << dims.d[2]
+                << std::endl;
+      if (-1 != vecDim)  // i.e., 0 != lgScalarsPerVector
+      {
+        int32_t scalarsPerVec = mEngine->getTensorComponentsPerElement(name);
+        dims.d[vecDim] = divUp(dims.d[vecDim], scalarsPerVec);
+        vol *= scalarsPerVec;
+      }
+      vol *= volume(dims);
+      auto hostBuffer = BufferManager::cpu(vol, type);
+      auto deviceBuffer = mBufferMgr->gpu(vol, type);
+      mDeviceBindings.push_back(deviceBuffer->data());
+      mDeviceBuffers.emplace_back(std::move(deviceBuffer));
+      mHostBuffers.emplace_back(std::move(hostBuffer));
+    } else {
+      std::cerr << "dynamic shape: " << name << std::endl;
+      mDeviceBindings.push_back(nullptr);
     }
-    vol *= volume(dims);
-    auto hostBuffer = BufferManager::cpu(vol, type);
-    auto deviceBuffer = mBufferMgr->gpu(vol, type);
-    mDeviceBindings.push_back(deviceBuffer->data());
-    mDeviceBuffers.emplace_back(std::move(deviceBuffer));
-    mHostBuffers.emplace_back(std::move(hostBuffer));
   }
-
   mIsInit = true;
 }
 

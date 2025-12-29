@@ -59,5 +59,6 @@ function(add_gtest test_name test_src)
   add_dependencies(google-tests ${test_name})
 endfunction()
 
+add_subdirectory(utils)
 add_subdirectory(unit_tests)
 add_subdirectory(e2e_tests)
