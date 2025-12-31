@@ -45,6 +45,7 @@
 #include "m_engine/runtime/iTensor.h"
 #include "m_engine/runtime/memoryCounters.h"
 #include "m_engine/runtime/utils/numpyUtils.h"
+#include "tests/utils/common.h"
 
 namespace mr = m_engine::runtime;
 namespace mc = m_engine::common;
@@ -68,32 +69,37 @@ void testInvalidCtor(std::filesystem::path const& enginePath,
   }
 }
 
-/*
 TEST_F(YoloExecutorTest, validInputBuffer) {
-  auto trtEnginePath =
-"/srcs/sources/mw/mEngine/cpp/tests/resources/models/model.engine"; auto
-mBufferManager =
+  auto mBufferManager =
       std::make_unique<mr::BufferManager>(std::make_unique<mr::CudaStream>());
 
-  //  nvinfer1::Dims inputDims(1,3,224,224);
-  // nvinfer1::DataType dataType = nvinfer1::DataType::KFLOAT;
-
   auto executor = TRTExecutor(trtEnginePath);
-  auto input_host_buffer = executor.GetHostBuffer("gpu_0/data_0");
-  EXPECT_EQ(input_host_buffer->getSize(), 1 * 3 * 224 * 224);
+  auto input_host_buffer = executor.GetHostBuffer("images");
+  EXPECT_EQ(input_host_buffer->getSize(), 1 * 3 * 640 * 640);
   EXPECT_EQ(input_host_buffer->getSizeInBytes(),
-            1 * 3 * 224 * 224 * sizeof(float));
+            1 * 3 * 640 * 640 * sizeof(float));
 
-  auto input_device_buffer = executor.GetDeviceBuffer("gpu_0/data_0");
-  EXPECT_EQ(input_device_buffer->getSize(), 1 * 3 * 224 * 224);
+  auto input_device_buffer = executor.GetDeviceBuffer("images");
+  EXPECT_EQ(input_device_buffer->getSize(), 1 * 3 * 640 * 640);
   EXPECT_EQ(input_device_buffer->getSizeInBytes(),
-            1 * 3 * 224 * 224 * sizeof(float));
+            1 * 3 * 640 * 640 * sizeof(float));
 
   EXPECT_EQ(input_host_buffer->getSize(), input_device_buffer->getSize());
   EXPECT_EQ(input_host_buffer->getSizeInBytes(),
             input_device_buffer->getSizeInBytes());
+
+  auto output0_device_buffer = executor.GetDeviceBuffer("output0");
+  EXPECT_EQ(output0_device_buffer->getSize(), 1 * 41 * 8400);
+  EXPECT_EQ(output0_device_buffer->getSizeInBytes(),
+            1 * 41 * 8400 * sizeof(float));
+
+  auto output1_device_buffer = executor.GetDeviceBuffer("output1");
+  EXPECT_EQ(output1_device_buffer->getSize(), 1 * 32 * 160 * 160);
+  EXPECT_EQ(output1_device_buffer->getSizeInBytes(),
+            1 * 32 * 160 * 160 * sizeof(float));
 }
 
+/*
 TEST_F(YoloExecutorTest, validOutputBuffer) {
   auto trtEnginePath = "/tmp/quantize/1215/model.engine";
   auto output_tensor_name = "gpu_0/softmax_1";
@@ -181,15 +187,9 @@ TEST_F(YoloExecutorTest, validMemUsed) {
 TEST_F(YoloExecutorTest, validOutput) {
   auto mBufferMgr =
       std::make_unique<mr::BufferManager>(std::make_unique<mr::CudaStream>());
-  auto trtEnginePath =
-      "/srcs/sources/opensrc/model_optimizer/examples/"
-      "yolo_5_class_full_dataset.251209_simplifier.engine";
-  auto input_npy =
-      "/srcs/sources/opensrc/model_optimizer/examples/yolo_input.npy";
-  auto output0_npy =
-      "/srcs/sources/opensrc/model_optimizer/examples/output0.npy";
-  auto output1_npy =
-      "/srcs/sources/opensrc/model_optimizer/examples/output1.npy";
+  auto input_npy = YOLO_INPUT_DATA_PATH.c_str();
+  auto output0_npy = YOLO_OUTPUT0_DATA_PATH.c_str();
+  auto output1_npy = YOLO_OUTPUT1_DATA_PATH.c_str();
   auto loadedTensor =
       mr::utils::loadNpy(*mBufferMgr, input_npy, mr::MemoryType::kCPU);
   auto output0Tensor =
@@ -226,7 +226,17 @@ TEST_F(YoloExecutorTest, validOutput) {
   auto output1_host_buffer = executor.GetHostBuffer(output1_tensor_name);
 
   executor.PrepareData();
-  executor.Infer();
+  int loops[] = {1, 2, 3, 4, 5};
+  for (int i : loops) {
+    auto start = std::chrono::system_clock::now();
+
+    executor.Infer();
+
+    auto end = std::chrono::system_clock::now();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    std::cerr << "duration: " << duration.count() << " ms" << std::endl;
+  }
 
   EXPECT_EQ(memcmp(output0_host_buffer->data(), output0Tensor->data(),
                    output0Tensor->getSizeInBytes()),

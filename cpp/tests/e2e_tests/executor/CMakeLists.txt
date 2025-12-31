@@ -14,4 +14,5 @@
 # the License.
 
 add_gtest(executorTest executorTest.cpp)
+set_architecture_definitions(executorTest)
 #target_link_libraries(executorTest PRIVATE testingUtils)

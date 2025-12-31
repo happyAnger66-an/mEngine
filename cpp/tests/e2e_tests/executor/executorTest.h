@@ -23,6 +23,8 @@
 
 #include "m_engine/common/cudaUtils.h"
 
+#include "tests/utils/common.h"
+
 namespace m_engine::testing {
 
 class YoloExecutorTest
@@ -38,6 +40,12 @@ class YoloExecutorTest
   }
 
   void TearDown() override {}
+
+#ifdef X86_64
+  const std::string trtEnginePath = YOLO_X86_ENGINE_PATH.c_str();
+#else
+  const std::string trtEnginePath = YOLO_THOR_ENGINE_PATH.c_str();
+#endif
 
   int mDeviceCount{};
 };

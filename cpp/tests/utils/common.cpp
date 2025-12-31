@@ -1,6 +1,6 @@
 /*
- * SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
- * SPDX-License-Identifier: Apache-2.0
+ * SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION &
+ * AFFILIATES. All rights reserved. SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,11 @@
 
 #include "common.h"
 
+#include <gtest/gtest.h>
+
+#include <algorithm>
+#include <vector>
+
 #include "m_engine/common/assert.h"
 #include "m_engine/common/memoryUtils.h"
 #include "m_engine/executor/executor.h"
@@ -26,16 +31,9 @@
 #include "m_engine/runtime/utils/numpyUtils.h"
 #include "tests/utils/common.h"
 
-#include <gtest/gtest.h>
-
-#include <algorithm>
-#include <vector>
-
-namespace m_engine::testing
-{
+namespace m_engine::testing {
 namespace fs = std::filesystem;
 namespace tr = m_engine::runtime;
 namespace tc = m_engine::common;
 
-
-} // namespace m_engine::testing
+}  // namespace m_engine::testing
