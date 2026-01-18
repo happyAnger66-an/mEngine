@@ -288,6 +288,7 @@ list(APPEND COMMON_HEADER_DIRS)
 include_directories(${COMMON_HEADER_DIRS})
 include_directories(SYSTEM ${TORCH_INCLUDE_DIRS})
 
+add_subdirectory(protos)
 add_subdirectory(m_engine)
 
 if(BUILD_TESTS)

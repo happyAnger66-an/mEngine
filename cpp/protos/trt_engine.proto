@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package mEngine.inference;
+
+import "trt_io.proto";
+
+// There are two version numbers that developers should care about when
+// developing a CUDA application: The compute capability that describes the
+// general specifications and features of the compute device (see Compute
+// Capability) and the version of the CUDA driver API that describes the
+// features supported by the driver API and runtime.
+message RuntimeSpec {
+  // Semantic version defines the version of both dependent libraries and
+  // release TensorRT models. To reuse plan files, and timing caches, version
+  // numbers must match across major, minor, patch, and build versions.
+  // Calibration caches can typically be reused within a major version but
+  // compatibility is not guaranteed.
+  message SemanticVersion {
+    // `major` version when you make incompatible API changes.
+    int32 major_version = 1;
+    // `minor` version when you add functionality in a backwards compatible
+    // manner.
+    int32 minor_version = 2;
+    // `patch` version when you make backwards compatible bug fixes.
+    int32 patch_version = 3;
+    // optional: `build`` related information.
+    int32 build_version = 4;
+  }
+
+  // TensorRT software library version is crutial since converted models are
+  // tied to the verison on which the model was converted. At runtime, the
+  // version recorded with the model will be compared against the runtime
+  // environment version. Should these versions differ, the models will NOT
+  // execute.
+  SemanticVersion trt_version = 1;
+
+  message CUDAConfig {
+    // Stores the latest version of CUDA supported by the driver. The version is
+    // returned as `1000 * major + 10 * minor`. For example, CUDA 9.2 would be
+    // represented by 9020. If no driver is installed, then 0 is obtained as the
+    // driver version through CUDA API.
+    int32 driver_version = 1;
+    // The version number of the current CUDA runtime instance. The version is
+    // stored as `1000 * major + 10 * minor`. For example, CUDA 9.2 would be
+    // represented by 9020.
+    int32 runtime_version = 2;
+  }
+  CUDAConfig cuda_version = 2;
+
+  // The compute capability of a device is represented by a version number, also
+  // sometimes called its "SM version". This version number identifies the
+  // features supported by the GPU hardware and is used by applications at
+  // runtime to determine which hardware features and/or instructions are
+  // available on the present GPU.
+  message DeviceConfig {
+    // Devices with the same major revision number are of the same core
+    // architecture.
+    int32 compute_capability_version_major = 5;
+    // The minor revision number corresponds to an incremental improvement to
+    // the core architecture, possibly including new features.
+    int32 compute_capability_version_minor = 6;
+  }
+  DeviceConfig gpu_compute_capability = 3;
+}
+
+// TensorRT converts an input model/network based on the given configurations
+// into a serialized form, referred to as a `plan`.
+message EngineConfig {
+  // Serialized engine/plan.
+  bytes serialized_engine = 1;
+  // Runtime information when the plan was created. This will be compared
+  // against the actual runtime. If the software version or driver version
+  // differ, engine will fail to execute.
+  RuntimeSpec runtime = 2;
+  // Checksum of the serialized engine, used for data integrity verification.
+  string checksum = 3;
+  // Information about the input tensors of the serialized plan.
+  repeated TrtIOConfig input_tensors = 4;
+  // Information about the output tensors of the serialized plan.
+  repeated TrtIOConfig output_tensors = 5;
+  // Plugin libraries (.so files) that need to be loaded for plan execution.
+  repeated string plugin_libraries = 7;
+  // GITSHA of the repo when creating the engine file.
+  string gitsha = 8;
+}
+
+// For an input network/model, a TrtMultiarchEngine object will contain multiple
+// plans targeting different GPU platform and software versions.
+message TrthEngineConfig {
+  // Human readable descriptions for the model.
+  string description = 1;
+  // Multiple plan files for different GPU platforms and runtime software
+  // versions.
+  repeated EngineConfig engines = 4;
+}
