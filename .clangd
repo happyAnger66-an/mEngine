@@ -1,0 +1,10 @@
+CompileFlags:
+  CompilationDatabase: build
+
+Index:
+  Background: Build
+  External: /path/to/external/libs
+  
+Completion:
+  AllScopes: false
+  Placeholders: false
